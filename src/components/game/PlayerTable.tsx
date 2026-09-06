@@ -37,7 +37,7 @@ export function PlayerTable({
           background: "color-mix(in oklab, var(--color-bg-elevated) 80%, black)",
         }}
       >
-        <span className="font-display text-base tracking-wide text-fg/90">دور</span>
+        <span className="logo-glow font-display text-base tracking-wide text-fg">دور</span>
       </div>
       {players.map((p, i) => {
         const angle = (i / n) * Math.PI * 2 - Math.PI / 2;

@@ -14,6 +14,10 @@ class SoundManager {
   private lastCorrectVariant: number = -1;
   private lastSwapVariant: number = -1;
   private tickToggle: boolean = false;
+  private noiseBuf: AudioBuffer | null = null;
+  private gameSecondsLeft = 60;
+  private bus: GainNode | null = null;
+  private resumeMode: "none" | "menu" | "game" = "none";
 
   constructor() {
     this.initAutoUnlock();
@@ -54,15 +58,127 @@ class SoundManager {
     return this.ctx;
   }
 
+  private dest(): AudioNode | null {
+    const ctx = this.getAudioContext();
+    if (!ctx) return null;
+    if (!this.bus || this.bus.context !== ctx) {
+      this.bus = ctx.createGain();
+      this.bus.gain.value = 0.9;
+      this.bus.connect(ctx.destination);
+    }
+    return this.bus;
+  }
+
+  private noise(): AudioBuffer | null {
+    const ctx = this.getAudioContext();
+    if (!ctx) return null;
+    if (this.noiseBuf) return this.noiseBuf;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    this.noiseBuf = buf;
+    return buf;
+  }
+
+  private kick(t: number, vol = 0.28) {
+    const ctx = this.getAudioContext();
+    const out = this.dest();
+    if (!ctx || !out) return;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(170, t);
+    osc.frequency.exponentialRampToValueAtTime(48, t + 0.11);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc.connect(g);
+    g.connect(out);
+    osc.start(t);
+    osc.stop(t + 0.22);
+  }
+
+  private snare(t: number, vol = 0.14) {
+    const ctx = this.getAudioContext();
+    const buf = this.noise();
+    const out = this.dest();
+    if (!ctx || !buf || !out) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 1400;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    src.connect(hp);
+    hp.connect(g);
+    g.connect(out);
+    src.start(t);
+    src.stop(t + 0.14);
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(180, t);
+    og.gain.setValueAtTime(vol * 0.5, t);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(og);
+    og.connect(out);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  private hat(t: number, open = false, vol = 0.045) {
+    const ctx = this.getAudioContext();
+    const buf = this.noise();
+    const out = this.dest();
+    if (!ctx || !buf || !out) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = open ? 6000 : 8000;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + (open ? 0.14 : 0.035));
+    src.connect(hp);
+    hp.connect(g);
+    g.connect(out);
+    src.start(t);
+    src.stop(t + 0.16);
+  }
+
+  private tone(
+    t: number,
+    freq: number,
+    dur: number,
+    vol: number,
+    type: OscillatorType = "triangle",
+  ) {
+    const ctx = this.getAudioContext();
+    const out = this.dest();
+    if (!ctx || !out || !freq) return;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(g);
+    g.connect(out);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+
   public setMuted(muted: boolean) {
     this.isMuted = muted;
     if (muted) {
+      this.resumeMode = this.currentBgmMode === "none" ? this.resumeMode : this.currentBgmMode;
       this.stopSpeech();
       this.stopBGM();
+    } else if (this.resumeMode === "game") {
+      this.startGameplayBGM(this.gameSecondsLeft);
     } else {
-      if (this.currentBgmMode === 'menu') {
-        this.startMenuBGM();
-      }
+      this.startMenuBGM();
     }
   }
 
@@ -522,159 +638,108 @@ class SoundManager {
     } catch (e) {}
   }
 
-  // --- PROCEDURAL POLYPHONIC BACKGROUND MUSIC (BGM) ---
+  // --- PARTY BGM: four-on-the-floor, hook, tension ramp ---
 
-  // 1. Menu & Ambient BGM (Warm, relaxing 32-step progression: Cmaj7 - Am7 - Dm7 - G7)
   public startMenuBGM() {
     if (this.isMuted) return;
-    if (this.currentBgmMode === 'menu') return;
-
+    if (this.currentBgmMode === "menu") return;
     this.stopBGM();
-    this.currentBgmMode = 'menu';
+    this.currentBgmMode = "menu";
     this.bgmStep = 0;
     this.scheduleNextMenuBeat();
   }
 
   private scheduleNextMenuBeat() {
-    if (this.currentBgmMode !== 'menu' || this.isMuted) return;
+    if (this.currentBgmMode !== "menu" || this.isMuted) return;
     const ctx = this.getAudioContext();
     if (!ctx) return;
 
-    // Upbeat relaxed tempo (300ms per step)
-    const stepMs = 300;
-
-    // 32-step rich melodic chord sequence with pleasant variations
-    const melodySeq = [
-      // Phrase 1: Cmaj7
-      523.25, 659.25, 783.99, 987.77, 783.99, 659.25, 523.25, null,
-      // Phrase 2: Am7
-      440.00, 523.25, 659.25, 880.00, 659.25, 523.25, 440.00, null,
-      // Phrase 3: Dm7
-      587.33, 698.46, 880.00, 1046.50, 880.00, 698.46, 587.33, null,
-      // Phrase 4: G9 resolution
-      392.00, 493.88, 587.33, 739.99, 880.00, 739.99, 587.33, 523.25
-    ];
-
-    const bassSeq = [
-      130.81, null, 130.81, null, 164.81, null, 196.00, null, // C3
-      110.00, null, 110.00, null, 130.81, null, 164.81, null, // A2
-      146.83, null, 146.83, null, 174.61, null, 220.00, null, // D3
-      98.00,  null, 98.00,  null, 123.47, null, 146.83, null  // G2
-    ];
+    const stepMs = 128;
+    const step = this.bgmStep % 32;
+    const now = ctx.currentTime;
 
     try {
-      const now = ctx.currentTime;
-      const step = this.bgmStep % 32;
-      const mNote = melodySeq[step];
-      const bNote = bassSeq[step];
+      if (step % 4 === 0) this.kick(now, 0.26);
+      if (step % 16 === 10) this.kick(now, 0.14);
+      if (step % 8 === 4) this.snare(now, 0.13);
+      if (step % 2 === 0) this.hat(now, false, 0.04);
+      if (step % 8 === 6) this.hat(now, true, 0.05);
 
-      // Soft Warm Kalimba/Rhodes Melody
-      if (mNote !== null) {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(mNote, now);
-        gain.gain.setValueAtTime(0.025, now);
-        gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.26);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.26);
-      }
+      const bassLoop = [
+        98.0, null, 98.0, 146.83, 130.81, null, 130.81, 196.0,
+        110.0, null, 110.0, 164.81, 146.83, null, 98.0, 123.47,
+        87.31, null, 87.31, 130.81, 116.54, null, 146.83, 174.61,
+        98.0, null, 123.47, 146.83, 196.0, 146.83, 130.81, 98.0,
+      ];
+      const b = bassLoop[step];
+      if (b) this.tone(now, b, 0.18, 0.12, "sawtooth");
 
-      // Warm acoustic bass
-      if (bNote !== null) {
-        const bassOsc = ctx.createOscillator();
-        const bassGain = ctx.createGain();
-        bassOsc.type = 'sine';
-        bassOsc.frequency.setValueAtTime(bNote, now);
-        bassGain.gain.setValueAtTime(0.045, now);
-        bassGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.38);
-        bassOsc.connect(bassGain);
-        bassGain.connect(ctx.destination);
-        bassOsc.start(now);
-        bassOsc.stop(now + 0.38);
-      }
-    } catch (e) {}
+      const hook = [
+        523.25, null, 659.25, 783.99, null, 659.25, 523.25, 392.0,
+        440.0, null, 523.25, 659.25, null, 783.99, 659.25, null,
+        587.33, 659.25, 783.99, 880.0, null, 783.99, 659.25, 523.25,
+        659.25, 783.99, 987.77, 880.0, 783.99, 659.25, 523.25, null,
+      ];
+      const m = hook[step];
+      if (m) this.tone(now, m, 0.16, 0.07, "square");
+    } catch {
+      // ignore
+    }
 
     this.bgmStep++;
-    this.bgmTimeout = window.setTimeout(() => {
-      this.scheduleNextMenuBeat();
-    }, stepMs);
+    this.bgmTimeout = window.setTimeout(() => this.scheduleNextMenuBeat(), stepMs);
   }
 
-  // 2. Gameplay Dynamic Rhythm BGM
-  public startGameplayBGM(secondsRemaining: number) {
+  public startGameplayBGM(secondsRemaining = 60) {
     if (this.isMuted) return;
-    if (this.currentBgmMode === 'game') return;
-
+    this.gameSecondsLeft = secondsRemaining;
+    if (this.currentBgmMode === "game") return;
     this.stopBGM();
-    this.currentBgmMode = 'game';
+    this.currentBgmMode = "game";
     this.bgmStep = 0;
-    this.scheduleNextGameBeat(secondsRemaining);
+    this.scheduleNextGameBeat();
   }
 
-  private scheduleNextGameBeat(secondsRemaining: number) {
-    if (this.currentBgmMode !== 'game' || this.isMuted) return;
+  public updateGameTension(secondsRemaining: number) {
+    this.gameSecondsLeft = secondsRemaining;
+  }
+
+  private scheduleNextGameBeat() {
+    if (this.currentBgmMode !== "game" || this.isMuted) return;
     const ctx = this.getAudioContext();
     if (!ctx) return;
 
-    // Tempo adapts smoothly
-    let stepMs = 240;
-    if (secondsRemaining <= 5) stepMs = 140;
-    else if (secondsRemaining <= 15) stepMs = 175;
-    else if (secondsRemaining <= 30) stepMs = 205;
-
-    // 16-step dynamic bass groove
-    const bassRhythm = [
-      110.0, 110.0, 130.81, 146.83, 164.81, 146.83, 130.81, 98.0,
-      110.0, 130.81, 146.83, 174.61, 164.81, 146.83, 110.0, 130.81
-    ];
+    const hot = this.gameSecondsLeft <= 10;
+    const rush = this.gameSecondsLeft <= 5;
+    const stepMs = rush ? 92 : hot ? 108 : 124;
+    const step = this.bgmStep % 16;
+    const now = ctx.currentTime;
 
     try {
-      const now = ctx.currentTime;
-      const note = bassRhythm[this.bgmStep % bassRhythm.length];
+      if (step % 4 === 0) this.kick(now, rush ? 0.32 : 0.28);
+      if (hot && step === 6) this.kick(now, 0.16);
+      if (step === 4 || step === 12) this.snare(now, rush ? 0.18 : 0.14);
+      this.hat(now, step % 4 === 3, rush ? 0.06 : 0.04);
 
-      // Warm pulsing bass note
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(note, now);
+      const bass = [82.41, 82.41, 110.0, 123.47, 98.0, 98.0, 130.81, 146.83, 82.41, 110.0, 123.47, 146.83, 98.0, 82.41, 110.0, 130.81];
+      this.tone(now, bass[step], 0.12, 0.11, "sawtooth");
 
-      gain.gain.setValueAtTime(0.045, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.12);
-
-      // Subtle shaker rhythm on odd beats
-      if (this.bgmStep % 2 === 1) {
-        const shaker = ctx.createOscillator();
-        const shakerGain = ctx.createGain();
-        shaker.type = 'sine';
-        shaker.frequency.setValueAtTime(2400 + Math.random() * 400, now);
-        shakerGain.gain.setValueAtTime(0.015, now);
-        shakerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
-
-        shaker.connect(shakerGain);
-        shakerGain.connect(ctx.destination);
-
-        shaker.start(now);
-        shaker.stop(now + 0.03);
+      if (step === 0 || step === 8) {
+        this.tone(now, hot ? 659.25 : 523.25, 0.1, 0.05, "square");
       }
-    } catch (e) {}
+      if (rush && step % 2 === 0) {
+        this.tone(now, 1046.5, 0.04, 0.035, "square");
+      }
+    } catch {
+      // ignore
+    }
 
     this.bgmStep++;
-    this.bgmTimeout = window.setTimeout(() => {
-      this.scheduleNextGameBeat(secondsRemaining);
-    }, stepMs);
+    this.bgmTimeout = window.setTimeout(() => this.scheduleNextGameBeat(), stepMs);
   }
 
   public stopBGM() {
-    this.currentBgmMode = 'none';
+    this.currentBgmMode = "none";
     if (this.bgmTimeout) {
       window.clearTimeout(this.bgmTimeout);
       this.bgmTimeout = null;

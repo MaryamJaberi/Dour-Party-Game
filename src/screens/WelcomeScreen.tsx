@@ -70,10 +70,15 @@ export function WelcomeScreen() {
         </div>
       }
     >
-      <div className="flex min-h-[40%] flex-col items-center justify-center py-6 text-center">
-        <h1 className="font-display text-6xl leading-none text-fg">دور</h1>
-        <p className="mt-2 font-display text-xl tracking-[0.18em] text-fg/80">DOUR</p>
-        <p className="mt-4 max-w-[16rem] text-sm text-muted">{t(lang, "tagline")}</p>
+      <div className="relative flex min-h-[42%] flex-col items-center justify-center py-6 text-center">
+        <div className="party-chip mb-3 flex gap-2">
+          <span className="size-3 rounded-full bg-accent shadow-[0_0_12px_#ff4d7a]" />
+          <span className="size-3 rounded-full bg-warn shadow-[0_0_12px_#ffc857]" />
+          <span className="size-3 rounded-full bg-teal shadow-[0_0_12px_#2ee0b2]" />
+        </div>
+        <h1 className="logo-glow font-display text-7xl font-semibold leading-none text-fg">دور</h1>
+        <p className="mt-2 font-display text-lg font-semibold tracking-[0.28em] text-warn">PARTY</p>
+        <p className="mt-4 max-w-[17rem] text-sm text-muted">{t(lang, "tagline")}</p>
       </div>
 
       <CollapsedList

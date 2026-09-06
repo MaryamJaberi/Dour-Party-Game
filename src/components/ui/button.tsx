@@ -8,10 +8,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-accent text-accent-fg hover:opacity-95",
-        paper: "bg-paper text-paper-ink hover:bg-[#efe9dc]",
+        primary: "bg-accent text-accent-fg shadow-[0_10px_28px_-8px_rgba(255,77,122,0.85)] hover:opacity-95",
+        paper: "bg-paper text-paper-ink hover:bg-[#ffe9b8]",
         ghost: "bg-transparent text-fg hover:bg-fg/8 border border-border",
-        teal: "bg-teal text-teal-fg hover:opacity-95",
+        teal: "bg-teal text-teal-fg shadow-[0_10px_24px_-10px_rgba(46,224,178,0.8)] hover:opacity-95",
         danger: "bg-accent/15 text-accent hover:bg-accent/25",
         subtle: "bg-bg-subtle text-fg hover:bg-bg-elevated",
       },

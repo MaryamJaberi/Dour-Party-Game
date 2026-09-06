@@ -198,7 +198,7 @@ export const useGame = create<GameState>((set, get) => ({
   setScreen: (screen) => {
     const { settings } = get();
     if (settings.soundEnabled) {
-      if (screen === "play") sound.stopMenuBGM();
+      if (screen === "play") sound.startGameplayBGM();
       else sound.startMenuBGM();
     }
     set({ screen, overlay: "none" });
@@ -271,8 +271,8 @@ export const useGame = create<GameState>((set, get) => ({
 
   confirmSeating: () => {
     const { settings } = get();
-    sound.stopMenuBGM();
     sound.playStartGame?.();
+    sound.startGameplayBGM(settings.roundDuration);
     set({
       screen: "play",
       overlay: settings.passPhoneScreenEnabled ? "pass" : "none",
@@ -281,6 +281,7 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   revealTurn: () => {
+    sound.startGameplayBGM(Math.ceil(get().roundTimer / 1000));
     set({ overlay: "none", cardStartedAt: Date.now(), flashName: null });
   },
 

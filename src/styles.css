@@ -1,27 +1,27 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Vazirmatn:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Vazirmatn", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Fraunces", "Vazirmatn", Georgia, serif;
+  --font-display: "Fredoka", "Vazirmatn", system-ui, sans-serif;
 
-  --color-bg: #0c1017;
-  --color-bg-elevated: #151922;
-  --color-bg-subtle: #1c222d;
-  --color-felt: #12161e;
-  --color-paper: #f7f2e8;
-  --color-paper-ink: #161410;
-  --color-paper-muted: #6f6a63;
-  --color-fg: #f3efe6;
-  --color-muted: #9a958c;
-  --color-subtle: #6d6a64;
-  --color-border: color-mix(in oklab, #f3efe6 12%, transparent);
-  --color-border-strong: color-mix(in oklab, #f3efe6 22%, transparent);
-  --color-accent: #e24b5a;
-  --color-accent-fg: #fff7f5;
-  --color-teal: #2a9d8a;
-  --color-teal-fg: #06211c;
-  --color-warn: #c4922a;
+  --color-bg: #14081c;
+  --color-bg-elevated: #22112e;
+  --color-bg-subtle: #2c183c;
+  --color-felt: #1a0c24;
+  --color-paper: #fff4dc;
+  --color-paper-ink: #2a1020;
+  --color-paper-muted: #7a5a4a;
+  --color-fg: #fff6ea;
+  --color-muted: #c9a8c0;
+  --color-subtle: #8e6d88;
+  --color-border: color-mix(in oklab, #ffd6f0 16%, transparent);
+  --color-border-strong: color-mix(in oklab, #ffd6f0 28%, transparent);
+  --color-accent: #ff4d7a;
+  --color-accent-fg: #fff7f8;
+  --color-teal: #2ee0b2;
+  --color-teal-fg: #04241c;
+  --color-warn: #ffc857;
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -30,7 +30,7 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 
-  --shadow-soft: 0 18px 50px -24px rgb(0 0 0 / 0.55);
+  --shadow-soft: 0 18px 50px -24px rgb(255 70 140 / 0.45);
 }
 
 @layer base {
@@ -41,7 +41,7 @@
 
   html,
   body,
-  #root {
+  #app {
     height: 100%;
     height: 100svh;
     max-height: 100svh;
@@ -95,9 +95,101 @@
 .felt-bg {
   background-color: var(--color-bg);
   background-image:
-    radial-gradient(900px 420px at 50% -8%, color-mix(in oklab, var(--color-accent) 22%, transparent), transparent 62%),
-    radial-gradient(700px 380px at 85% 115%, color-mix(in oklab, var(--color-teal) 14%, transparent), transparent 58%),
-    radial-gradient(circle at 20% 80%, color-mix(in oklab, #4d7ec8 8%, transparent), transparent 40%);
+    radial-gradient(700px 380px at 50% -12%, rgba(255, 70, 140, 0.38), transparent 62%),
+    radial-gradient(520px 320px at 100% 110%, rgba(46, 224, 178, 0.22), transparent 58%),
+    radial-gradient(420px 280px at 0% 90%, rgba(255, 200, 87, 0.16), transparent 50%),
+    radial-gradient(circle at 18% 22%, #ff7ab8 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 16%, #ffd56a 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 42%, #7af0ff 0 2px, transparent 3px),
+    radial-gradient(circle at 12% 68%, #b388ff 0 2px, transparent 3px),
+    radial-gradient(circle at 62% 78%, #ff9a4d 0 2px, transparent 3px);
+}
+
+.party-twinkle {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 12%, #fff 0 1.4px, transparent 2px),
+    radial-gradient(circle at 70% 28%, #ffe38a 0 1.6px, transparent 2.2px),
+    radial-gradient(circle at 14% 48%, #ff8ec8 0 1.4px, transparent 2px),
+    radial-gradient(circle at 92% 62%, #8ef0d4 0 1.5px, transparent 2.1px),
+    radial-gradient(circle at 48% 86%, #ffd56a 0 1.3px, transparent 2px);
+  animation: twinkle 2.8s ease-in-out infinite;
+  opacity: 0.85;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.logo-glow {
+  text-shadow:
+    0 0 18px rgba(255, 77, 122, 0.75),
+    0 8px 40px rgba(255, 200, 87, 0.35);
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: brightness(1.12);
+    transform: scale(1.03);
+  }
+}
+
+.party-chip {
+  animation: bob 3.2s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.confetti {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.confetti i {
+  position: absolute;
+  top: -10%;
+  width: 7px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation: fall 2.8s linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-10%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120vh) rotate(280deg);
+    opacity: 0.2;
+  }
 }
 
 .paper-card {

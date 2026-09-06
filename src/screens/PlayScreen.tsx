@@ -58,6 +58,7 @@ export function GameClock() {
       sound.playCountdownBeep(sec);
     }
     if (sec > 5) lastSecond.current = -1;
+    sound.updateGameTension(sec);
   }, [roundTimer, overlay, screen]);
 
   return null;

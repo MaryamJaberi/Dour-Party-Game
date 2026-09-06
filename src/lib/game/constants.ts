@@ -5,10 +5,10 @@ export const TEAM_COLORS: Record<
   TeamColor,
   { hex: string; ink: string; name: string; soft: string }
 > = {
-  [TC.Blue]: { hex: "#5b8eeb", ink: "#f7f2e8", name: "Blue", soft: "rgba(91,142,235,0.22)" },
-  [TC.Red]: { hex: "#e05c68", ink: "#fff7f5", name: "Red", soft: "rgba(224,92,104,0.22)" },
-  [TC.Green]: { hex: "#3dba8a", ink: "#06211c", name: "Green", soft: "rgba(61,186,138,0.2)" },
-  [TC.Yellow]: { hex: "#e0b03a", ink: "#161410", name: "Amber", soft: "rgba(224,176,58,0.22)" },
+  [TC.Blue]: { hex: "#5aa7ff", ink: "#f7f2e8", name: "Blue", soft: "rgba(90,167,255,0.28)" },
+  [TC.Red]: { hex: "#ff5d7a", ink: "#fff7f5", name: "Red", soft: "rgba(255,93,122,0.28)" },
+  [TC.Green]: { hex: "#2ee0b2", ink: "#04241c", name: "Green", soft: "rgba(46,224,178,0.24)" },
+  [TC.Yellow]: { hex: "#ffc857", ink: "#2a1800", name: "Amber", soft: "rgba(255,200,87,0.28)" },
 };
 
 export const TEAM_ORDER: TeamColor[] = [TC.Blue, TC.Red, TC.Green, TC.Yellow];

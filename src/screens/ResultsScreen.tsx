@@ -71,7 +71,20 @@ export function ResultsScreen() {
       <div className="py-3">
         {tab === "podium" ? (
           <div className="space-y-4">
-            <div className="rounded-[28px] bg-bg-elevated p-5 text-center">
+            <div className="relative overflow-hidden rounded-[28px] bg-bg-elevated p-5 text-center">
+              <div className="confetti" aria-hidden>
+                {Array.from({ length: 14 }).map((_, i) => (
+                  <i
+                    key={i}
+                    style={{
+                      left: `${6 + i * 6.5}%`,
+                      background: ["#ff4d7a", "#ffc857", "#2ee0b2", "#7ab8ff"][i % 4],
+                      animationDelay: `${i * 0.12}s`,
+                      animationDuration: `${2.2 + (i % 5) * 0.25}s`,
+                    }}
+                  />
+                ))}
+              </div>
               <p className="text-xs uppercase tracking-wider text-muted">{tie ? t(lang, "tie") : t(lang, "winner")}</p>
               {winner ? (
                 <>
